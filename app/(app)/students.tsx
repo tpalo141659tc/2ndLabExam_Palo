@@ -1,30 +1,17 @@
-import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
-  Pressable,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
 
+import StudentCard, { type Student } from "@/components/StudentCard";
 import { API_BASE_URL } from "@/constants/api";
-import { useAuth } from "@/hooks/useAuth";
-
-type Student = {
-  id: string | number;
-  name?: string;
-  email?: string;
-  student_id?: string;
-  course?: string;
-  year_level?: string | number;
-};
 
 export default function StudentsScreen() {
-  const { token } = useAuth();
-
   const [students, setStudents] = useState<Student[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -36,21 +23,10 @@ export default function StudentsScreen() {
       setError("");
 
       try {
-        if (!token) {
-          setError("You are not authenticated.");
-          return;
-        }
-
-        if (API_BASE_URL === "REPLACE_WITH_EXAM_API") {
-          setError("The exam API URL has not been provided yet.");
-          return;
-        }
-
-        const response = await fetch(`${API_BASE_URL}/students`, {
+        const response = await fetch(`${API_BASE_URL}/users`, {
           method: "GET",
           headers: {
             Accept: "application/json",
-            Authorization: `Bearer ${token}`,
           },
         });
 
@@ -62,17 +38,11 @@ export default function StudentsScreen() {
 
         const data = await response.json();
 
-        /*
-         * TODO:
-         * Confirm the exact response structure
-         * with the instructor's API documentation.
-         */
+        if (!Array.isArray(data)) {
+          throw new Error("The student API returned an invalid response.");
+        }
 
-        const records = Array.isArray(data)
-          ? data
-          : data?.students || data?.data || [];
-
-        setStudents(records);
+        setStudents(data);
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Unable to load students.";
@@ -84,7 +54,7 @@ export default function StudentsScreen() {
     };
 
     loadStudents();
-  }, [token]);
+  }, []);
 
   const filteredStudents = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -96,12 +66,12 @@ export default function StudentsScreen() {
     return students.filter((student) => {
       const name = student.name?.toLowerCase() || "";
       const email = student.email?.toLowerCase() || "";
-      const studentId = student.student_id?.toLowerCase() || "";
+      const username = student.username?.toLowerCase() || "";
 
       return (
         name.includes(query) ||
         email.includes(query) ||
-        studentId.includes(query)
+        username.includes(query)
       );
     });
   }, [students, search]);
@@ -121,9 +91,7 @@ export default function StudentsScreen() {
       <View style={styles.center}>
         <Text style={styles.error}>{error}</Text>
 
-        <Text style={styles.smallText}>
-          The student API still needs to be connected.
-        </Text>
+        <Text style={styles.smallText}>Please try again later.</Text>
       </View>
     );
   }
@@ -139,6 +107,7 @@ export default function StudentsScreen() {
         placeholder="Search student..."
         value={search}
         onChangeText={setSearch}
+        autoCapitalize="none"
       />
 
       {filteredStudents.length === 0 ? (
@@ -154,32 +123,7 @@ export default function StudentsScreen() {
           data={filteredStudents}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={styles.list}
-          renderItem={({ item }) => (
-            <Pressable
-              style={styles.studentCard}
-              onPress={() => router.push(`/student/${item.id}`)}
-            >
-              <Text style={styles.studentName}>
-                {item.name || "Unnamed Student"}
-              </Text>
-
-              <Text style={styles.studentInfo}>
-                {item.email || "No email available"}
-              </Text>
-
-              {item.student_id ? (
-                <Text style={styles.studentInfo}>
-                  Student ID: {item.student_id}
-                </Text>
-              ) : null}
-
-              {item.course ? (
-                <Text style={styles.studentInfo}>Course: {item.course}</Text>
-              ) : null}
-
-              <Text style={styles.viewDetails}>View Details →</Text>
-            </Pressable>
-          )}
+          renderItem={({ item }) => <StudentCard student={item} />}
         />
       )}
     </View>
@@ -221,28 +165,6 @@ const styles = StyleSheet.create({
   list: {
     gap: 12,
     paddingBottom: 20,
-  },
-  studentCard: {
-    backgroundColor: "#ffffff",
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    borderRadius: 14,
-    padding: 16,
-    gap: 5,
-  },
-  studentName: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#17324d",
-  },
-  studentInfo: {
-    fontSize: 14,
-    color: "#64748b",
-  },
-  viewDetails: {
-    marginTop: 8,
-    color: "#245bb2",
-    fontWeight: "700",
   },
   message: {
     color: "#64748b",
