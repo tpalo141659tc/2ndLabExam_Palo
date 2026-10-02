@@ -10,25 +10,20 @@ function RootNavigator() {
 
   if (authLoading) {
     return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <ActivityIndicator size="large" />
       </View>
     );
   }
 
   const isSignIn = pathname === "/sign-in";
-  const isStudentDetails = pathname.startsWith("/student/");
 
+  // Not logged in → only Sign In is allowed
   if (!token && !isSignIn) {
     return <Redirect href="/sign-in" />;
   }
 
+  // Logged in → don't allow going back to Sign In
   if (token && isSignIn) {
     return <Redirect href="/(app)" />;
   }

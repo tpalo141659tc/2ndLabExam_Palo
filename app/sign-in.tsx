@@ -10,8 +10,10 @@ import {
   View,
 } from "react-native";
 
-import { API_BASE_URL } from "@/constants/api";
 import { useAuth } from "@/hooks/useAuth";
+
+const LOGIN_API_URL =
+  "https://c365d45f-857a-4cf0-933b-fcf721c7770e.mock.pstmn.io/login";
 
 export default function SignInScreen() {
   const { login } = useAuth();
@@ -39,19 +41,7 @@ export default function SignInScreen() {
     setLoading(true);
 
     try {
-      if (API_BASE_URL === "REPLACE_WITH_EXAM_API") {
-        throw new Error("The exam API URL has not been provided yet.");
-      }
-
-      /*
-       * TODO:
-       * The exact login payload and response fields must come
-       * from the instructor&apos;s API documentation.
-       *
-       * Do not guess these fields.
-       */
-
-      const response = await fetch(`${API_BASE_URL}/login`, {
+      const response = await fetch(LOGIN_API_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -71,22 +61,19 @@ export default function SignInScreen() {
         );
       }
 
-      /*
-       * TODO:
-       * Replace these fields with the exact response fields
-       * from the instructor's API documentation.
-       */
-
-      const accessToken =
-        data?.accessToken || data?.access_token || data?.token;
-
-      const userData = data?.user || data?.profile;
+      const accessToken = data?.accessToken;
+      const userData = data?.user;
 
       if (!accessToken) {
-        throw new Error("The API response did not contain an access token.");
+        throw new Error("The login response did not contain an access token.");
       }
 
-      await login(accessToken, userData || { email: cleanEmail });
+      await login(
+        accessToken,
+        userData || {
+          email: cleanEmail,
+        },
+      );
 
       router.replace("/(app)");
     } catch (err) {
@@ -160,7 +147,7 @@ export default function SignInScreen() {
         </Pressable>
 
         <Text style={styles.note}>
-          Login will work after the instructor&apos;s API details are added.
+          Enter your exam account credentials to sign in.
         </Text>
       </View>
     </ScrollView>
@@ -172,36 +159,45 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: "center",
     padding: 24,
+    backgroundColor: "#f3f6fa",
   },
+
   card: {
-    backgroundColor: "#ffffff",
+    width: "100%",
+    maxWidth: 720,
+    alignSelf: "center",
     padding: 24,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    gap: 10,
+    borderRadius: 16,
+    backgroundColor: "#ffffff",
   },
+
   eyebrow: {
-    fontSize: 12,
-    fontWeight: "700",
     color: "#245bb2",
-    letterSpacing: 1,
+    fontSize: 13,
+    fontWeight: "700",
+    marginBottom: 12,
   },
+
   title: {
+    color: "#17324d",
     fontSize: 28,
     fontWeight: "800",
-    color: "#17324d",
+    marginBottom: 8,
   },
+
   subtitle: {
+    color: "#536579",
     fontSize: 16,
-    color: "#64748b",
-    marginBottom: 10,
+    marginBottom: 24,
   },
+
   label: {
+    color: "#17324d",
     fontSize: 14,
     fontWeight: "700",
-    color: "#17324d",
+    marginBottom: 8,
   },
+
   input: {
     borderWidth: 1,
     borderColor: "#cbd5e1",
@@ -209,35 +205,42 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
+    marginBottom: 16,
     backgroundColor: "#ffffff",
   },
+
   feedback: {
     minHeight: 40,
     justifyContent: "center",
-    gap: 8,
   },
+
   error: {
-    color: "#b91c1c",
+    color: "#dc2626",
     fontSize: 14,
   },
+
   button: {
     backgroundColor: "#245bb2",
     paddingVertical: 14,
     borderRadius: 10,
+    alignItems: "center",
+    marginTop: 8,
   },
+
   buttonDisabled: {
     opacity: 0.6,
   },
+
   buttonText: {
     color: "#ffffff",
-    textAlign: "center",
-    fontWeight: "700",
     fontSize: 16,
+    fontWeight: "700",
   },
+
   note: {
-    fontSize: 13,
-    color: "#64748b",
+    color: "#536579",
     textAlign: "center",
-    marginTop: 8,
+    marginTop: 18,
+    fontSize: 13,
   },
 });
